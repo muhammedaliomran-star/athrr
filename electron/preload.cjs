@@ -19,5 +19,6 @@ contextBridge.exposeInMainWorld("athar", {
   defaultDestination: () => ipcRenderer.invoke("athar:defaultDestination"),
   recover: (opts) => ipcRenderer.invoke("athar:recover", opts),
   onRecoverProgress: (cb) => on("athar:recoverProgress", cb),
+  clearCarved: () => ipcRenderer.invoke("athar:clearCarved"),
   openFolder: (p) => ipcRenderer.invoke("athar:openFolder", p),
 });

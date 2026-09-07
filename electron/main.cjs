@@ -4,6 +4,7 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const os = require("os");
 const { execFile } = require("child_process");
+const { carve } = require("./carve.cjs");
 
 const IMAGE_EXT = new Set([".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".heic", ".tif", ".tiff", ".raw", ".cr2", ".nef", ".dng"]);
 const VIDEO_EXT = new Set([".mp4", ".mov", ".avi", ".mkv", ".wmv", ".flv", ".webm", ".m4v", ".3gp", ".mts"]);
@@ -62,7 +63,14 @@ async function boot() {
 }
 
 app.whenReady().then(boot);
-app.on("quit", () => serverProc && serverProc.kill());
+app.on("quit", () => {
+  if (serverProc) serverProc.kill();
+  try {
+    fs.rmSync(path.join(app.getPath("temp"), "athar-carved"), { recursive: true, force: true });
+  } catch {
+    /* تنظيف اختياري */
+  }
+});
 app.on("window-all-closed", () => process.platform !== "darwin" && app.quit());
 app.on("activate", () => BrowserWindow.getAllWindows().length === 0 && boot());
 
@@ -101,6 +109,7 @@ async function listDrives() {
         usedGb: Math.round((size - free) / 1024 ** 3),
         isSystem: id.toLowerCase() === systemRoot.slice(0, 2).toLowerCase(),
         path: `${id}\\`,
+        device: `\\\\.\\${id}`,
       });
     }
     return drives;
@@ -125,6 +134,7 @@ async function listDrives() {
       usedGb: Math.round(Number(usedK) / 1024 / 1024),
       isSystem: mount === "/",
       path: mount,
+      device: fsName,
     });
   }
   return drives;
@@ -224,14 +234,61 @@ async function walk(root, target, onTick) {
   return results;
 }
 
-ipcMain.handle("athar:startScan", async (_e, { path: root, target }) => {
+function carveDir() {
+  return path.join(app.getPath("temp"), "athar-carved");
+}
+
+ipcMain.handle("athar:startScan", async (_e, { path: root, target, mode, device }) => {
   if (scan.running) throw new Error("هناك فحص شغال بالفعل.");
   scan = { cancelled: false, paused: false, running: true };
   const send = (channel, payload) => win && !win.isDestroyed() && win.webContents.send(channel, payload);
+  const deep = mode === "deep";
   (async () => {
     try {
       await fsp.access(root, fs.constants.R_OK);
-      const files = await walk(root, target, (p) => send("athar:scanProgress", p));
+      let files = await walk(root, target, (p) =>
+        send("athar:scanProgress", deep ? { ...p, percent: p.percent * 0.35, phase: "quick" } : p),
+      );
+      if (scan.cancelled) return;
+
+      if (deep && device) {
+        const baseImages = files.filter((f) => f.kind === "image").length;
+        const baseVideos = files.filter((f) => f.kind === "video").length;
+        try {
+          const carved = await carve({
+            device,
+            outDir: carveDir(),
+            target,
+            shouldStop: () => scan.cancelled,
+            isPaused: () => scan.paused,
+            onTick: (p) =>
+              send("athar:scanProgress", {
+                percent: 35 + p.percent * 0.65,
+                images: baseImages + (p.images || 0),
+                videos: baseVideos + (p.videos || 0),
+                currentPath: p.currentPath,
+                phase: "deep",
+              }),
+          });
+          files = files.concat(carved);
+        } catch (err) {
+          const code = err && (err.code || (err.cause && err.cause.code));
+          if (code === "EACCES" || code === "EPERM") {
+            send(
+              "athar:scanError",
+              "الاستخراج العميق محتاج صلاحيات المدير للوصول للقرص مباشرة. اقفل أثر وافتحه بخيار «تشغيل كمسؤول» ثم أعد الفحص.",
+            );
+            return;
+          }
+          if (code === "EBUSY") {
+            send("athar:scanError", "القرص مشغول بواسطة النظام. اقفل البرامج اللي بتستخدمه وحاول تاني.");
+            return;
+          }
+          send("athar:scanError", `تعذّر الاستخراج العميق: ${(err && err.message) || "خطأ غير معروف"}`);
+          return;
+        }
+      }
+
       if (scan.cancelled) return;
       send("athar:scanDone", files);
     } catch (err) {
@@ -246,6 +303,11 @@ ipcMain.handle("athar:startScan", async (_e, { path: root, target }) => {
     }
   })();
   return { scanId: String(Date.now()) };
+});
+
+ipcMain.handle("athar:clearCarved", async () => {
+  await fsp.rm(carveDir(), { recursive: true, force: true });
+  return true;
 });
 
 ipcMain.handle("athar:cancelScan", () => {
