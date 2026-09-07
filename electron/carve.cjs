@@ -32,14 +32,6 @@ const SIGNATURES = [
     tail: Buffer.from([0x00, 0x3b]),
     max: 24 * MB,
   },
-  {
-    ext: "bmp",
-    kind: "image",
-    head: Buffer.from([0x42, 0x4d]),
-    tail: null,
-    fixed: true,
-    max: 24 * MB,
-  },
 ];
 
 // MP4 / MOV / 3GP: البصمة "ftyp" على الإزاحة 4 من بداية الملف
