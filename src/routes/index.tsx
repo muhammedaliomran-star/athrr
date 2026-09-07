@@ -11,16 +11,16 @@ import { drives, generateFiles, type FoundFile } from "@/lib/recovery-data";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "استعادة الملفات المحذوفة — صور وفيديوهات" },
+      { title: "أثر — استعادة الصور والفيديوهات المحذوفة" },
       {
         name: "description",
         content:
-          "أداة عربية بسيطة لاستعادة الصور والفيديوهات المحذوفة من الأقراص والفلاشات في أربع خطوات مع معاينة قبل الاسترجاع.",
+          "أثر تطبيق عربي لاستعادة الصور والفيديوهات المحذوفة من الأقراص والفلاشات مع معاينة قبل الاسترجاع.",
       },
-      { property: "og:title", content: "استعادة الملفات المحذوفة — صور وفيديوهات" },
+      { property: "og:title", content: "أثر — استعادة الصور والفيديوهات المحذوفة" },
       {
         property: "og:description",
-        content: "استرجع صورك وفيديوهاتك المحذوفة في 4 خطوات بسيطة، وشوفها قبل ما تسترجعها.",
+         content: "كل أثر يستحق الرجوع. استعد صورك وفيديوهاتك المحذوفة وعاينها قبل الاسترجاع.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -54,7 +54,9 @@ function Index() {
     });
   };
 
-  const drive = drives.find((d) => d.id === driveId)!;
+  const drive = drives.find((d) => d.id === driveId) ?? drives[0];
+
+  if (!drive) return null;
 
   const handleScanDone = useCallback(() => {
     const generated = generateFiles(30).filter((f) =>
