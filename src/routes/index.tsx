@@ -9,6 +9,7 @@ import { RecoverScreen } from "@/components/recovery/RecoverScreen";
 import {
   listDrives,
   startScan,
+  type ScanMode,
   type ScanHandle,
   type RecoverResult,
 } from "@/lib/athar-bridge";
@@ -41,6 +42,7 @@ function Index() {
   const [step, setStep] = useState(0);
   const [driveId, setDriveId] = useState("");
   const [target, setTarget] = useState<Target>("both");
+  const [mode, setMode] = useState<ScanMode>("quick");
   const [files, setFiles] = useState<FoundFile[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [destination, setDestination] = useState("");
@@ -49,7 +51,13 @@ function Index() {
   const [drivesLoading, setDrivesLoading] = useState(true);
   const [drivesError, setDrivesError] = useState<string | null>(null);
 
-  const [scanState, setScanState] = useState({ percent: 0, images: 0, videos: 0, currentPath: "" });
+  const [scanState, setScanState] = useState({
+    percent: 0,
+    images: 0,
+    videos: 0,
+    currentPath: "",
+    phase: "quick" as "quick" | "deep",
+  });
   const [scanPaused, setScanPaused] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const scanRef = useRef<ScanHandle | null>(null);
@@ -87,6 +95,7 @@ function Index() {
     } else {
       setDestination(settings.defaultDestination);
     }
+    setMode(settings.scanDepth);
     restored.current = true;
   }, []);
 
@@ -128,17 +137,19 @@ function Index() {
     if (!drive) return;
     setScanError(null);
     setScanPaused(false);
-    setScanState({ percent: 0, images: 0, videos: 0, currentPath: "" });
+    setScanState({ percent: 0, images: 0, videos: 0, currentPath: "", phase: mode === "deep" ? "deep" : "quick" });
     setStep(1);
     scanRef.current = startScan({
       drive,
       target,
+      mode,
       onProgress: (p) =>
         setScanState({
           percent: p.percent,
           images: p.images,
           videos: p.videos,
           currentPath: p.currentPath ?? "",
+          phase: p.phase ?? (mode === "deep" ? "deep" : "quick"),
         }),
       onDone: (found) => {
         scanRef.current = null;
@@ -151,7 +162,7 @@ function Index() {
         setScanError(message);
       },
     });
-  }, [drive, target]);
+  }, [drive, target, mode]);
 
   const stopScan = useCallback(() => {
     scanRef.current?.cancel();
@@ -212,6 +223,11 @@ function Index() {
           target={target}
           onSelectDrive={setDriveId}
           onSelectTarget={setTarget}
+          mode={mode}
+          onSelectMode={(m) => {
+            setMode(m);
+            saveSettings({ ...loadSettings(), scanDepth: m });
+          }}
           onStart={beginScan}
         />
       )}
@@ -222,6 +238,7 @@ function Index() {
           images={scanState.images}
           videos={scanState.videos}
           currentPath={scanState.currentPath}
+          phase={scanState.phase}
           paused={scanPaused}
           error={scanError}
           onTogglePause={() => {
