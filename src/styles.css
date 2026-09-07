@@ -26,7 +26,7 @@
  */
 
 @theme inline {
-  --font-display: "Reem Kufi", "Tajawal", sans-serif;
+  --font-display: "Palestine", "Tajawal", sans-serif;
   --font-sans: "Tajawal", sans-serif;
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
@@ -174,7 +174,10 @@
 
   h1,
   h2,
-  h3 {
+  h3,
+  h4,
+  button,
+  .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
