@@ -105,7 +105,7 @@ export function startScan(
         path: opts.drive.path,
         target: opts.target,
         mode: opts.mode ?? "quick",
-        device: opts.drive.device,
+        ...(opts.drive.device ? { device: opts.drive.device } : {}),
       })
       .catch((e: unknown) => opts.onError(e instanceof Error ? e.message : "فشل بدء الفحص."));
 
