@@ -27,19 +27,44 @@ function createWindow() {
     },
   });
   win.setMenuBarVisibility(false);
-
-  // في النسخة المبنيّة نحمّل الملفات محلياً، وأثناء التطوير نحمّل خادم فيت
-  const indexFile = path.join(__dirname, "..", "dist", "index.html");
-  const devUrl = process.env.ATHAR_URL || "http://localhost:8080";
-  if (fs.existsSync(indexFile)) win.loadFile(indexFile);
-  else win.loadURL(devUrl);
-
-  win.webContents.on("did-fail-load", () => win.loadURL(devUrl));
+  return win;
 }
 
-app.whenReady().then(createWindow);
+const { spawn } = require("child_process");
+let serverProc = null;
+
+/** يشغّل خادم أثر المحلي المرفق مع التطبيق ويعيد عنوانه */
+function startLocalServer() {
+  const entry = path.join(__dirname, "..", "dist", "server", "index.mjs");
+  if (!fs.existsSync(entry)) return Promise.resolve(process.env.ATHAR_URL || "http://localhost:8080");
+  const port = 41730 + Math.floor(Math.random() * 200);
+  serverProc = spawn(process.execPath, [entry], {
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", PORT: String(port), HOST: "127.0.0.1" },
+    stdio: "ignore",
+  });
+  const url = `http://127.0.0.1:${port}`;
+  return new Promise((resolve) => {
+    const started = Date.now();
+    const ping = () => {
+      require("http")
+        .get(url, () => resolve(url))
+        .on("error", () => (Date.now() - started > 15000 ? resolve(url) : setTimeout(ping, 250)));
+    };
+    setTimeout(ping, 300);
+  });
+}
+
+async function boot() {
+  const url = await startLocalServer();
+  const w = createWindow();
+  w.loadURL(url);
+  w.webContents.on("did-fail-load", () => setTimeout(() => w.loadURL(url), 500));
+}
+
+app.whenReady().then(boot);
+app.on("quit", () => serverProc && serverProc.kill());
 app.on("window-all-closed", () => process.platform !== "darwin" && app.quit());
-app.on("activate", () => BrowserWindow.getAllWindows().length === 0 && createWindow());
+app.on("activate", () => BrowserWindow.getAllWindows().length === 0 && boot());
 
 /* ---------- الأقراص ---------- */
 
