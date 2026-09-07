@@ -147,7 +147,7 @@ async function carve({
     } finally {
       await new Promise((r) => out.end(r));
     }
-    if (written < 512) {
+    if (written < 256) {
       await fsp.rm(outPath, { force: true });
       return null;
     }
