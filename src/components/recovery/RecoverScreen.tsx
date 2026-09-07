@@ -1,5 +1,22 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Folder, FolderCheck, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 
 type Phase = "confirm" | "running" | "done";
 
@@ -14,6 +31,8 @@ export function RecoverScreen({
 }) {
   const [phase, setPhase] = useState<Phase>("confirm");
   const [path, setPath] = useState("E:\\الملفات_المستعادة");
+  const [draftPath, setDraftPath] = useState(path);
+  const [pathOpen, setPathOpen] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -23,19 +42,38 @@ export function RecoverScreen({
         const next = Math.min(100, p + Math.random() * 6);
         if (next >= 100) {
           clearInterval(id);
-          setTimeout(() => setPhase("done"), 400);
+          setTimeout(() => {
+            setPhase("done");
+            toast.success("تمت الاستعادة بنجاح", {
+              description: `${count} ملف تم حفظهم في ${path}`,
+            });
+          }, 400);
         }
         return next;
       });
     }, 130);
     return () => clearInterval(id);
-  }, [phase]);
+  }, [phase, count, path]);
+
+  const savePath = () => {
+    const value = draftPath.trim();
+    if (!value) {
+      toast.error("اكتب مسار حفظ صحيح");
+      return;
+    }
+    setPath(value);
+    setPathOpen(false);
+    toast.success("تم تحديث مسار الحفظ", { description: value });
+  };
 
   return (
     <div>
-      <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-primary">
+      <Badge
+        variant="secondary"
+        className="rounded-full bg-primary/10 text-[10px] tracking-[0.2em] text-primary hover:bg-primary/10"
+      >
         الخطوة الرابعة
-      </span>
+      </Badge>
 
       {phase === "confirm" && (
         <div className="mx-auto mt-6 max-w-md">
@@ -49,31 +87,67 @@ export function RecoverScreen({
             <Folder className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
           </div>
 
-          <div className="mt-4 flex items-start gap-3 rounded-2xl bg-warning/10 p-4">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" strokeWidth={1.5} />
-            <p className="text-[13px] leading-relaxed text-warning">
+          <Alert className="mt-4 border-transparent bg-warning/10 text-warning">
+            <AlertTriangle className="h-4 w-4" strokeWidth={1.5} />
+            <AlertTitle>لا تحفظ على نفس القرص</AlertTitle>
+            <AlertDescription className="text-[13px] leading-relaxed">
               الحفظ على نفس القرص المفحوص قد يؤدي لفقدان البيانات نهائياً. اختر قرصاً مختلفاً كلما
               أمكن.
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
 
-          <p className="num mt-4 text-[13px] text-muted-foreground">
+          <p className="num mt-4 text-[13px] text-muted-foreground" aria-live="polite">
             سيتم استرجاع {count} ملف بحجم {totalMb.toFixed(1)} ميجا.
           </p>
 
           <div className="mt-6 flex gap-3">
-            <button
-              onClick={() => setPath((p) => (p.startsWith("E:") ? "F:\\Recovered" : "E:\\الملفات_المستعادة"))}
-              className="flex-1 rounded-full border border-border py-3 text-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-secondary active:scale-[0.98]"
+            <Dialog
+              open={pathOpen}
+              onOpenChange={(o) => {
+                setPathOpen(o);
+                if (o) setDraftPath(path);
+              }}
             >
-              تغيير المسار
-            </button>
-            <button
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex-1 rounded-full py-6 text-sm">
+                  تغيير المسار
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-right">مسار حفظ الملفات</DialogTitle>
+                  <DialogDescription className="text-right">
+                    اكتب المسار الكامل للمجلد اللي عايز تحفظ فيه الملفات المستعادة.
+                  </DialogDescription>
+                </DialogHeader>
+                <div>
+                  <Label htmlFor="save-path" className="mb-1.5 block text-[13px]">
+                    المسار
+                  </Label>
+                  <Input
+                    id="save-path"
+                    value={draftPath}
+                    onChange={(e) => setDraftPath(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && savePath()}
+                    className="num"
+                    placeholder="F:\\Recovered"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setPathOpen(false)}>
+                    إلغاء
+                  </Button>
+                  <Button onClick={savePath}>حفظ المسار</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Button
               onClick={() => setPhase("running")}
-              className="flex-1 rounded-full bg-primary py-3 text-sm text-primary-foreground transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-primary-glow active:scale-[0.98]"
+              className="flex-1 rounded-full py-6 text-sm hover:bg-primary-glow"
             >
               استعادة الآن
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -82,13 +156,15 @@ export function RecoverScreen({
         <div className="mx-auto mt-8 max-w-md text-center">
           <h1 className="text-2xl">جاري استعادة الملفات...</h1>
           <p className="num mt-2 text-[13px] text-muted-foreground">الحفظ في {path}</p>
-          <div className="mt-8 h-2.5 w-full overflow-hidden rounded-full bg-border">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="num mt-3 text-sm text-muted-foreground">{Math.round(progress)}%</p>
+          <Progress
+            value={progress}
+            aria-label="تقدم الاسترجاع"
+            aria-valuetext={`${Math.round(progress)} بالمئة`}
+            className="mt-8 h-2.5 bg-border"
+          />
+          <p className="num mt-3 text-sm text-muted-foreground" aria-live="polite">
+            {Math.round(progress)}%
+          </p>
         </div>
       )}
 
@@ -102,16 +178,24 @@ export function RecoverScreen({
             تم استرجاع {count} ملف بحجم {totalMb.toFixed(1)} ميجا إلى {path}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <button className="rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-primary-glow active:scale-[0.98]">
+            <Button
+              onClick={() =>
+                toast("فتح مجلد الملفات", {
+                  description: `المسار: ${path} — فتح المجلد يشتغل في نسخة سطح المكتب.`,
+                })
+              }
+              className="rounded-full px-6 py-6 text-sm hover:bg-primary-glow"
+            >
               فتح مجلد الملفات
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={onRestart}
-              className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-secondary active:scale-[0.98]"
+              className="gap-2 rounded-full px-6 py-6 text-sm"
             >
               <RotateCcw className="h-4 w-4" strokeWidth={1.5} />
               فحص جديد
-            </button>
+            </Button>
           </div>
         </div>
       )}

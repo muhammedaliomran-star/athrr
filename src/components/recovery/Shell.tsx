@@ -1,6 +1,10 @@
 import { Moon, Sun, HardDriveDownload } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 const steps = ["المصدر", "الفحص", "المعاينة", "الاسترجاع"];
 
 export function Shell({
@@ -37,33 +41,42 @@ export function Shell({
             </div>
           </div>
 
-          <button
-            onClick={onToggleTheme}
-            aria-label="تبديل الوضع الليلي"
-            className="group flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card/70 text-foreground transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-accent active:scale-95"
-          >
-            {dark ? (
-              <Sun className="h-[18px] w-[18px]" strokeWidth={1.5} />
-            ) : (
-              <Moon className="h-[18px] w-[18px]" strokeWidth={1.5} />
-            )}
-          </button>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={onToggleTheme}
+                  aria-label={dark ? "التبديل للوضع النهاري" : "التبديل للوضع الليلي"}
+                  className="h-11 w-11 rounded-full bg-card/70 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95"
+                >
+                  {dark ? (
+                    <Sun className="h-[18px] w-[18px]" strokeWidth={1.5} />
+                  ) : (
+                    <Moon className="h-[18px] w-[18px]" strokeWidth={1.5} />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{dark ? "الوضع النهاري" : "الوضع الليلي"}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </header>
 
         <nav className="mb-8 flex items-center gap-2" aria-label="خطوات الاسترجاع">
           {steps.map((label, i) => (
             <div key={label} className="flex flex-1 items-center gap-2">
               <div className="w-full">
-                <div className="h-1 w-full overflow-hidden rounded-full bg-border">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                    style={{ width: i <= step ? "100%" : "0%" }}
-                  />
-                </div>
+                <Progress
+                  value={i <= step ? 100 : 0}
+                  className="h-1 bg-border"
+                  aria-label={`الخطوة ${i + 1}: ${label}`}
+                />
                 <p
                   className={`mt-2 text-[11px] tracking-[0.14em] ${
                     i <= step ? "text-primary" : "text-muted-foreground"
                   }`}
+                  aria-current={i === step ? "step" : undefined}
                 >
                   {label}
                 </p>
