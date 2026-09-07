@@ -27,7 +27,14 @@ function createWindow() {
     },
   });
   win.setMenuBarVisibility(false);
-  win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+
+  // في النسخة المبنيّة نحمّل الملفات محلياً، وأثناء التطوير نحمّل خادم فيت
+  const indexFile = path.join(__dirname, "..", "dist", "index.html");
+  const devUrl = process.env.ATHAR_URL || "http://localhost:8080";
+  if (fs.existsSync(indexFile)) win.loadFile(indexFile);
+  else win.loadURL(devUrl);
+
+  win.webContents.on("did-fail-load", () => win.loadURL(devUrl));
 }
 
 app.whenReady().then(createWindow);
