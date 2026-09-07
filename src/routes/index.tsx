@@ -1,24 +1,114 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { Shell } from "@/components/recovery/Shell";
+import { SourceScreen, type Target } from "@/components/recovery/SourceScreen";
+import { ScanScreen } from "@/components/recovery/ScanScreen";
+import { PreviewScreen } from "@/components/recovery/PreviewScreen";
+import { RecoverScreen } from "@/components/recovery/RecoverScreen";
+import { drives, generateFiles, type FoundFile } from "@/lib/recovery-data";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "استعادة الملفات المحذوفة — صور وفيديوهات" },
+      {
+        name: "description",
+        content:
+          "أداة عربية بسيطة لاستعادة الصور والفيديوهات المحذوفة من الأقراص والفلاشات في أربع خطوات مع معاينة قبل الاسترجاع.",
+      },
+      { property: "og:title", content: "استعادة الملفات المحذوفة — صور وفيديوهات" },
+      {
+        property: "og:description",
+        content: "استرجع صورك وفيديوهاتك المحذوفة في 4 خطوات بسيطة، وشوفها قبل ما تسترجعها.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const [dark, setDark] = useState(false);
+  const [step, setStep] = useState(0);
+  const [driveId, setDriveId] = useState("d");
+  const [target, setTarget] = useState<Target>("both");
+  const [files, setFiles] = useState<FoundFile[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const stored = localStorage.getItem("recovery-theme");
+    const prefers = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setDark(stored ? stored === "dark" : prefers);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
+  const toggleTheme = () => {
+    setDark((d) => {
+      localStorage.setItem("recovery-theme", d ? "light" : "dark");
+      return !d;
+    });
+  };
+
+  const drive = drives.find((d) => d.id === driveId)!;
+
+  const handleScanDone = useCallback(() => {
+    const generated = generateFiles(30).filter((f) =>
+      target === "both" ? true : f.kind === target,
+    );
+    setFiles(generated);
+    setSelected(new Set(generated.slice(0, 3).map((f) => f.id)));
+    setStep(2);
+  }, [target]);
+
+  const toggleFile = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const totalMb = files.filter((f) => selected.has(f.id)).reduce((s, f) => s + f.sizeMb, 0);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <Shell step={step} dark={dark} onToggleTheme={toggleTheme}>
+      {step === 0 && (
+        <SourceScreen
+          driveId={driveId}
+          target={target}
+          onSelectDrive={setDriveId}
+          onSelectTarget={setTarget}
+          onStart={() => setStep(1)}
+        />
+      )}
+      {step === 1 && (
+        <ScanScreen driveName={drive.name} onDone={handleScanDone} onCancel={() => setStep(0)} />
+      )}
+      {step === 2 && (
+        <PreviewScreen
+          files={files}
+          selected={selected}
+          onToggle={toggleFile}
+          onClear={() => setSelected(new Set())}
+          onNext={() => setStep(3)}
+        />
+      )}
+      {step === 3 && (
+        <RecoverScreen
+          count={selected.size}
+          totalMb={totalMb}
+          onRestart={() => {
+            setSelected(new Set());
+            setFiles([]);
+            setStep(0);
+          }}
+        />
+      )}
+    </Shell>
   );
 }
