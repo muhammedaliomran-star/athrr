@@ -46,12 +46,16 @@ export function PreviewScreen({
   selected,
   onToggle,
   onClear,
+  onSelectAll,
+  onRescan,
   onNext,
 }: {
   files: FoundFile[];
   selected: Set<string>;
   onToggle: (id: string) => void;
   onClear: () => void;
+  onSelectAll: () => void;
+  onRescan: () => void;
   onNext: () => void;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
@@ -139,9 +143,14 @@ export function PreviewScreen({
         <span className="num text-[13px] text-primary">
           تم تحديد {selected.size} ملف بحجم إجمالي {totalMb.toFixed(1)} ميجا
         </span>
-        <Button variant="link" onClick={onClear} className="h-auto p-0 text-[13px] text-primary">
-          إلغاء تحديد الكل
-        </Button>
+        <span className="flex items-center gap-4">
+          <Button variant="link" onClick={onSelectAll} className="h-auto p-0 text-[13px] text-primary">
+            تحديد الكل
+          </Button>
+          <Button variant="link" onClick={onClear} className="h-auto p-0 text-[13px] text-primary">
+            إلغاء تحديد الكل
+          </Button>
+        </span>
       </div>
 
       <ScrollArea className="mt-6 max-h-[26rem] pl-3">
@@ -165,7 +174,14 @@ export function PreviewScreen({
                       background: `linear-gradient(135deg, hsl(${f.hue} 45% 55% / 0.35), hsl(${(f.hue + 60) % 360} 45% 45% / 0.2))`,
                     }}
                   >
-                    {f.kind === "video" ? (
+                    {f.thumbUrl && f.kind === "image" ? (
+                      <img
+                        src={f.thumbUrl}
+                        alt={`معاينة مصغّرة لـ ${f.name}`}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : f.kind === "video" ? (
                       <Video className="h-6 w-6 text-foreground/60" strokeWidth={1.5} />
                     ) : (
                       <ImageIcon className="h-6 w-6 text-foreground/60" strokeWidth={1.5} />
@@ -195,8 +211,22 @@ export function PreviewScreen({
         </div>
       </ScrollArea>
 
-      {visible.length === 0 && (
-        <p className="mt-10 text-center text-[15px] text-muted-foreground">لا توجد ملفات مطابقة.</p>
+      {files.length === 0 ? (
+        <div className="mt-8 rounded-2xl border border-dashed border-border p-10 text-center">
+          <p className="text-[15px]">لم نعثر على أي ملفات قابلة للاسترجاع.</p>
+          <p className="mt-2 text-[13px] text-muted-foreground">
+            جرّب فحص قرص آخر، أو غيّر نوع الملفات المستهدفة وأعد الفحص.
+          </p>
+          <Button variant="outline" onClick={onRescan} className="mt-5 rounded-full px-6">
+            إعادة الفحص
+          </Button>
+        </div>
+      ) : (
+        visible.length === 0 && (
+          <div className="mt-8 rounded-2xl border border-dashed border-border p-10 text-center">
+            <p className="text-[15px] text-muted-foreground">لا توجد ملفات مطابقة لبحثك أو للفلتر المختار.</p>
+          </div>
+        )
       )}
 
       {pages > 1 && (
@@ -252,7 +282,15 @@ export function PreviewScreen({
                 background: `linear-gradient(135deg, hsl(${preview.hue} 45% 55% / 0.35), hsl(${(preview.hue + 60) % 360} 45% 45% / 0.2))`,
               }}
             >
-              {preview.kind === "video" ? (
+              {preview.thumbUrl && preview.kind === "video" ? (
+                <video src={preview.thumbUrl} controls className="h-full w-full object-contain" />
+              ) : preview.thumbUrl ? (
+                <img
+                  src={preview.thumbUrl}
+                  alt={`معاينة ${preview.name}`}
+                  className="h-full w-full object-contain"
+                />
+              ) : preview.kind === "video" ? (
                 <Video className="h-10 w-10 text-foreground/50" strokeWidth={1.2} />
               ) : (
                 <ImageIcon className="h-10 w-10 text-foreground/50" strokeWidth={1.2} />

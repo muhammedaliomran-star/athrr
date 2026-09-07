@@ -8,6 +8,8 @@ export type Drive = {
   totalGb: number;
   usedGb: number;
   isSystem: boolean;
+  /** مسار القرص على الجهاز (نسخة سطح المكتب فقط) */
+  path?: string;
 };
 
 export type FoundFile = {
@@ -17,14 +19,21 @@ export type FoundFile = {
   sizeMb: number;
   health: Health;
   hue: number;
+  /** المسار الأصلي على القرص (نسخة سطح المكتب) */
+  path?: string;
+  /** رابط معاينة حقيقي للصورة أو الفيديو */
+  thumbUrl?: string;
 };
 
-export const drives: Drive[] = [
+export const demoDrives: Drive[] = [
   { id: "c", name: "القرص C:", kind: "disk", totalGb: 512, usedGb: 388, isSystem: true },
   { id: "d", name: "القرص D:", kind: "disk", totalGb: 500, usedGb: 210, isSystem: false },
   { id: "usb", name: "فلاشة USB", kind: "usb", totalGb: 32, usedGb: 8, isSystem: false },
   { id: "sd", name: "كارت ميموري SD", kind: "sd", totalGb: 64, usedGb: 41, isSystem: false },
 ];
+
+/** @deprecated استخدم listDrives من athar-bridge */
+export const drives = demoDrives;
 
 const healths: Health[] = ["سليمة", "سليمة", "سليمة", "جزئية", "تالفة"];
 
