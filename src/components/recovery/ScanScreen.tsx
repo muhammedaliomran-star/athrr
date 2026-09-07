@@ -23,6 +23,7 @@ export function ScanScreen({
   images,
   videos,
   currentPath,
+  phase = "quick",
   paused,
   error,
   onTogglePause,
@@ -34,6 +35,7 @@ export function ScanScreen({
   images: number;
   videos: number;
   currentPath?: string;
+  phase?: "quick" | "deep";
   paused: boolean;
   error: string | null;
   onTogglePause: () => void;
@@ -79,8 +81,19 @@ export function ScanScreen({
       </Badge>
       <p className="mt-4 text-[15px] text-muted-foreground">جاري فحص {driveName}</p>
       <h1 className="mt-1 text-3xl md:text-4xl">
-        {percent >= 100 ? "اكتمل الفحص" : paused ? "الفحص متوقف مؤقتاً" : "فحص عميق شغال..."}
+        {percent >= 100
+          ? "اكتمل الفحص"
+          : paused
+            ? "الفحص متوقف مؤقتاً"
+            : phase === "deep"
+              ? "استخراج عميق من قطاعات القرص..."
+              : "فحص سريع شغال..."}
       </h1>
+      {phase === "deep" && percent < 100 && (
+        <p className="mt-2 text-[13px] text-muted-foreground">
+          بنقرأ القرص قطاع بقطاع — العملية دي بطيئة بطبيعتها، سيبها تكمّل.
+        </p>
+      )}
 
       <div
         className="relative mx-auto mt-8 h-[150px] w-[150px] sm:mt-10 sm:h-[180px] sm:w-[180px]"

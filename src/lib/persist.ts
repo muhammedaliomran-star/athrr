@@ -69,7 +69,7 @@ export type Settings = {
 
 export const defaultSettings: Settings = {
   theme: "system",
-  scanDepth: "deep",
+  scanDepth: "quick",
   skipCorrupt: false,
   confirmBeforeRecover: true,
   keepFolderStructure: false,
