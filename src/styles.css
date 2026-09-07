@@ -194,6 +194,48 @@
   background-size: 40px 40px;
 }
 
+.brand-word {
+  width: fit-content;
+  color: var(--color-primary);
+  font-family: var(--font-display);
+  font-weight: 400;
+  transform-origin: right center;
+  animation:
+    brand-word-arrive 700ms var(--ease-fluid) both,
+    brand-word-breathe 4.8s var(--ease-fluid) 1.2s infinite;
+}
+
+@keyframes brand-word-arrive {
+  from {
+    opacity: 0;
+    transform: translateX(14px) scale(0.94);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes brand-word-breathe {
+  0%,
+  100% {
+    color: var(--color-primary);
+    transform: scale(1);
+  }
+  50% {
+    color: var(--color-primary-glow);
+    transform: scale(1.035);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-word {
+    animation: none;
+  }
+}
+
 @utility num {
   font-family: "Tajawal", sans-serif;
   font-variant-numeric: tabular-nums;

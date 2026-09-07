@@ -1,7 +1,6 @@
 import { Moon, Sun } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { BrandMark } from "@/components/recovery/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,13 +22,11 @@ export function Shell({
     <div className="brand-canvas relative min-h-[100dvh] overflow-hidden bg-background px-4 py-6 md:px-8 md:py-10">
       <div className="relative mx-auto w-full max-w-5xl">
         <header className="mb-8 flex items-center justify-between gap-4 border-b border-border/70 pb-5">
-          <div className="flex items-center gap-3">
-            <BrandMark className="h-11 w-11" />
+          <div className="flex items-center">
             <div>
-              <div className="flex items-baseline gap-2">
-                <h2 className="text-2xl leading-none">أثر</h2>
-                <span className="h-1.5 w-1.5 bg-primary" aria-hidden />
-              </div>
+              <h2 className="brand-word text-4xl leading-none" aria-label="أُثر">
+                أُثر
+              </h2>
               <p className="mt-1 text-[12px] text-muted-foreground">كل أثر يستحق الرجوع</p>
             </div>
           </div>
