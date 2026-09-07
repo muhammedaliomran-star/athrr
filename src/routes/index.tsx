@@ -56,8 +56,6 @@ function Index() {
 
   const drive = drives.find((d) => d.id === driveId) ?? drives[0];
 
-  if (!drive) return null;
-
   const handleScanDone = useCallback(() => {
     const generated = generateFiles(30).filter((f) =>
       target === "both" ? true : f.kind === target,
@@ -66,6 +64,9 @@ function Index() {
     setSelected(new Set(generated.slice(0, 3).map((f) => f.id)));
     setStep(2);
   }, [target]);
+
+  if (!drive) return null;
+
 
   const toggleFile = (id: string) =>
     setSelected((prev) => {
