@@ -3,7 +3,13 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "main": "electron/main.cjs",
+  "version": "1.0.0",
+  "productName": "Athar",
   "scripts": {
+    "electron": "electron .",
+    "package:win": "vite build && electron-packager . Athar --platform=win32 --arch=x64 --out=electron-release --overwrite --ignore=\"^/src\" --ignore=\"^/electron-release\"",
+    "package:mac": "vite build && electron-packager . Athar --platform=darwin --arch=x64 --out=electron-release --overwrite --ignore=\"^/src\" --ignore=\"^/electron-release\"",
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
