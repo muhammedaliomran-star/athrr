@@ -14,7 +14,14 @@ import {
   type RecoverResult,
 } from "@/lib/athar-bridge";
 import type { Drive, FoundFile } from "@/lib/recovery-data";
-import { addHistory, clearSession, loadSession, loadSettings, saveSession } from "@/lib/persist";
+import {
+  addHistory,
+  clearSession,
+  loadSession,
+  loadSettings,
+  saveSession,
+  saveSettings,
+} from "@/lib/persist";
 
 export const Route = createFileRoute("/")({
   head: () => ({
