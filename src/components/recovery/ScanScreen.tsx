@@ -30,11 +30,11 @@ export function ScanScreen({
   const remaining = Math.max(0, Math.round(((100 - progress) / 100) * 180));
 
   useEffect(() => {
-    if (progress >= 100) {
-      const t = setTimeout(() => onDone(142, 17), 600);
-      return () => clearTimeout(t);
-    }
+    if (progress < 100) return undefined;
+    const t = setTimeout(() => onDone(142, 17), 600);
+    return () => clearTimeout(t);
   }, [progress, onDone]);
+
 
   const r = 70;
   const c = 2 * Math.PI * r;
