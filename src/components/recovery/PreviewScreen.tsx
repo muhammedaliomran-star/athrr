@@ -203,6 +203,11 @@ export function PreviewScreen({
                 </Label>
                 <div className="flex items-center gap-1.5 px-3 pb-3 pt-1.5">
                   <Badge className={`${healthBadgeClass(f.health)} text-[10px]`}>{f.health}</Badge>
+                  {f.carved && (
+                    <Badge className="border-transparent bg-primary/15 text-[10px] text-primary hover:bg-primary/20">
+                      استخراج عميق
+                    </Badge>
+                  )}
                   <span className="num text-[11px] text-muted-foreground">{f.sizeMb} م.ب</span>
                 </div>
               </div>
