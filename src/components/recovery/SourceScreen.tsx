@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, HardDrive, MemoryStick, RefreshCw, Usb } from "lucide-react";
+import { AlertTriangle, ArrowLeft, HardDrive, MemoryStick, RefreshCw, Radar, Usb } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import type { ScanMode } from "@/lib/athar-bridge";
 import type { Drive, FileKind } from "@/lib/recovery-data";
 
 const icons = { disk: HardDrive, usb: Usb, sd: MemoryStick } as const;
@@ -29,6 +30,8 @@ export function SourceScreen({
   target,
   onSelectDrive,
   onSelectTarget,
+  mode,
+  onSelectMode,
   onStart,
 }: {
   drives: Drive[];
@@ -39,6 +42,8 @@ export function SourceScreen({
   target: Target;
   onSelectDrive: (id: string) => void;
   onSelectTarget: (t: Target) => void;
+  mode: ScanMode;
+  onSelectMode: (m: ScanMode) => void;
   onStart: () => void;
 }) {
   const selected = drives.find((d) => d.id === driveId);
@@ -168,6 +173,42 @@ export function SourceScreen({
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
+
+      <p className="mt-8 mb-3 text-[15px] text-muted-foreground" id="mode-label">
+        عمق الفحص
+      </p>
+      <ToggleGroup
+        type="single"
+        value={mode}
+        onValueChange={(v) => v && onSelectMode(v as ScanMode)}
+        aria-labelledby="mode-label"
+        className="inline-flex gap-1 rounded-full border border-border bg-secondary/60 p-1"
+      >
+        <ToggleGroupItem
+          value="quick"
+          className="rounded-full px-5 py-2 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+        >
+          فحص سريع
+        </ToggleGroupItem>
+        <ToggleGroupItem
+          value="deep"
+          className="gap-2 rounded-full px-5 py-2 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+        >
+          <Radar className="h-4 w-4" strokeWidth={1.5} />
+          استخراج عميق
+        </ToggleGroupItem>
+      </ToggleGroup>
+
+      {mode === "deep" && (
+        <Alert className="mt-4 border-transparent bg-primary/10 text-foreground">
+          <Radar className="h-4 w-4 text-primary" strokeWidth={1.5} />
+          <AlertTitle>الاستخراج العميق</AlertTitle>
+          <AlertDescription className="text-[13px] leading-relaxed text-muted-foreground">
+            بيقرأ القرص قطاع بقطاع ويطلع الصور والفيديوهات اللي اتمسحت خالص من جدول الملفات، حتى لو
+            اسمها ضاع. بياخد وقت أطول بكتير، ومحتاج تشغيل أثر بصلاحيات المدير.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="mt-10">
         <Button

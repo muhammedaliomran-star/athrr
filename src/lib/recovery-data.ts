@@ -10,6 +10,8 @@ export type Drive = {
   isSystem: boolean;
   /** مسار القرص على الجهاز (نسخة سطح المكتب فقط) */
   path?: string;
+  /** الجهاز الخام للاستخراج العميق مثل \\.\C: */
+  device?: string;
 };
 
 export type FoundFile = {
@@ -23,6 +25,10 @@ export type FoundFile = {
   path?: string;
   /** رابط معاينة حقيقي للصورة أو الفيديو */
   thumbUrl?: string;
+  /** الملف اتجاب بالاستخراج العميق من قطاعات القرص */
+  carved?: boolean;
+  /** موقع الملف على القرص بالبايت (الاستخراج العميق) */
+  offset?: number;
 };
 
 export const demoDrives: Drive[] = [
