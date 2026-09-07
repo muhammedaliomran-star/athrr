@@ -17,43 +17,77 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import {
+  chooseFolder,
+  defaultDestination,
+  isDesktop,
+  openFolder,
+  recoverFiles,
+  type RecoverResult,
+} from "@/lib/athar-bridge";
+import type { FoundFile } from "@/lib/recovery-data";
 
-type Phase = "confirm" | "running" | "done";
+type Phase = "confirm" | "running" | "done" | "failed";
 
 export function RecoverScreen({
-  count,
+  files,
   totalMb,
+  destination,
+  onDestinationChange,
+  onFinished,
   onRestart,
 }: {
-  count: number;
+  files: FoundFile[];
   totalMb: number;
+  destination: string;
+  onDestinationChange: (path: string) => void;
+  onFinished: (result: RecoverResult) => void;
   onRestart: () => void;
 }) {
+  const count = files.length;
   const [phase, setPhase] = useState<Phase>("confirm");
-  const [path, setPath] = useState("E:\\الملفات_المستعادة");
-  const [draftPath, setDraftPath] = useState(path);
+  const [draftPath, setDraftPath] = useState(destination);
   const [pathOpen, setPathOpen] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [result, setResult] = useState<RecoverResult | null>(null);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
+    if (destination) return;
+    void defaultDestination().then(onDestinationChange);
+  }, [destination, onDestinationChange]);
+
+  // منع إغلاق النافذة أثناء النسخ
+  useEffect(() => {
     if (phase !== "running") return undefined;
-    const id = setInterval(() => {
-      setProgress((p) => {
-        const next = Math.min(100, p + Math.random() * 6);
-        if (next >= 100) {
-          clearInterval(id);
-          setTimeout(() => {
-            setPhase("done");
-            toast.success("تمت الاستعادة بنجاح", {
-              description: `${count} ملف تم حفظهم في ${path}`,
-            });
-          }, 400);
-        }
-        return next;
-      });
-    }, 130);
-    return () => clearInterval(id);
-  }, [phase, count, path]);
+    const guard = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", guard);
+    return () => window.removeEventListener("beforeunload", guard);
+  }, [phase]);
+
+  const start = async () => {
+    setPhase("running");
+    setProgress(0);
+    try {
+      const res = await recoverFiles(files, destination, (p) => setProgress(p.percent));
+      setResult(res);
+      onFinished(res);
+      setPhase("done");
+      if (res.failed.length) {
+        toast.warning("انتهى الاسترجاع مع بعض الأخطاء", {
+          description: `${res.recovered} ملف نجح · ${res.failed.length} ملف فشل`,
+        });
+      } else {
+        toast.success("تمت الاستعادة بنجاح", {
+          description: `${res.recovered} ملف تم حفظهم في ${res.destination}`,
+        });
+      }
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "حدث خطأ غير متوقع أثناء الاسترجاع.");
+      setPhase("failed");
+      toast.error("فشل الاسترجاع");
+    }
+  };
 
   const savePath = () => {
     const value = draftPath.trim();
@@ -61,7 +95,7 @@ export function RecoverScreen({
       toast.error("اكتب مسار حفظ صحيح");
       return;
     }
-    setPath(value);
+    onDestinationChange(value);
     setPathOpen(false);
     toast.success("تم تحديث مسار الحفظ", { description: value });
   };
@@ -82,9 +116,11 @@ export function RecoverScreen({
             <h1 className="text-2xl">اختر مكان الحفظ</h1>
           </div>
 
-          <div className="flex items-center justify-between rounded-2xl border border-border bg-secondary/40 px-4 py-3">
-            <span className="num text-sm">{path}</span>
-            <Folder className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-secondary/40 px-4 py-3">
+            <span className="num truncate text-sm" dir="ltr">
+              {destination || "…"}
+            </span>
+            <Folder className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
           </div>
 
           <Alert className="mt-4 border-transparent bg-warning/10 text-warning">
@@ -100,50 +136,64 @@ export function RecoverScreen({
             سيتم استرجاع {count} ملف بحجم {totalMb.toFixed(1)} ميجا.
           </p>
 
-          <div className="mt-6 flex gap-3">
-            <Dialog
-              open={pathOpen}
-              onOpenChange={(o) => {
-                setPathOpen(o);
-                if (o) setDraftPath(path);
-              }}
-            >
-              <DialogTrigger asChild>
-                <Button variant="outline" className="flex-1 rounded-full py-6 text-sm">
-                  تغيير المسار
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-right">مسار حفظ الملفات</DialogTitle>
-                  <DialogDescription className="text-right">
-                    اكتب المسار الكامل للمجلد اللي عايز تحفظ فيه الملفات المستعادة.
-                  </DialogDescription>
-                </DialogHeader>
-                <div>
-                  <Label htmlFor="save-path" className="mb-1.5 block text-[13px]">
-                    المسار
-                  </Label>
-                  <Input
-                    id="save-path"
-                    value={draftPath}
-                    onChange={(e) => setDraftPath(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && savePath()}
-                    className="num"
-                    placeholder="F:\\Recovered"
-                  />
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setPathOpen(false)}>
-                    إلغاء
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            {isDesktop() ? (
+              <Button
+                variant="outline"
+                className="flex-1 rounded-full py-6 text-sm"
+                onClick={async () => {
+                  const p = await chooseFolder();
+                  if (p) onDestinationChange(p);
+                }}
+              >
+                تصفح المجلدات
+              </Button>
+            ) : (
+              <Dialog
+                open={pathOpen}
+                onOpenChange={(o) => {
+                  setPathOpen(o);
+                  if (o) setDraftPath(destination);
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex-1 rounded-full py-6 text-sm">
+                    تغيير المسار
                   </Button>
-                  <Button onClick={savePath}>حفظ المسار</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-right">مسار حفظ الملفات</DialogTitle>
+                    <DialogDescription className="text-right">
+                      اكتب المسار الكامل للمجلد اللي عايز تحفظ فيه الملفات المستعادة.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div>
+                    <Label htmlFor="save-path" className="mb-1.5 block text-[13px]">
+                      المسار
+                    </Label>
+                    <Input
+                      id="save-path"
+                      value={draftPath}
+                      onChange={(e) => setDraftPath(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && savePath()}
+                      className="num"
+                      placeholder="F:\\Recovered"
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setPathOpen(false)}>
+                      إلغاء
+                    </Button>
+                    <Button onClick={savePath}>حفظ المسار</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
 
             <Button
-              onClick={() => setPhase("running")}
+              onClick={start}
+              disabled={!destination || count === 0}
               className="flex-1 rounded-full py-6 text-sm hover:bg-primary-glow"
             >
               استعادة الآن
@@ -155,7 +205,7 @@ export function RecoverScreen({
       {phase === "running" && (
         <div className="mx-auto mt-8 max-w-md text-center">
           <h1 className="text-2xl">جاري استعادة الملفات...</h1>
-          <p className="num mt-2 text-[13px] text-muted-foreground">الحفظ في {path}</p>
+          <p className="num mt-2 truncate text-[13px] text-muted-foreground">الحفظ في {destination}</p>
           <Progress
             value={progress}
             aria-label="تقدم الاسترجاع"
@@ -165,34 +215,69 @@ export function RecoverScreen({
           <p className="num mt-3 text-sm text-muted-foreground" aria-live="polite">
             {Math.round(progress)}%
           </p>
+          <p className="mt-4 text-[12px] text-muted-foreground">
+            من فضلك لا تغلق التطبيق ولا تفصل القرص أثناء النسخ.
+          </p>
         </div>
       )}
 
-      {phase === "done" && (
+      {phase === "failed" && (
+        <div className="mx-auto mt-8 max-w-md text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/15 text-destructive">
+            <AlertTriangle className="h-8 w-8" strokeWidth={1.5} />
+          </div>
+          <h1 className="mt-6 text-2xl">فشل الاسترجاع</h1>
+          <p className="mt-3 text-[14px] text-muted-foreground">{errorMsg}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button onClick={() => setPhase("confirm")} className="rounded-full px-6 py-6 text-sm">
+              حاول مرة أخرى
+            </Button>
+            <Button variant="outline" onClick={onRestart} className="rounded-full px-6 py-6 text-sm">
+              فحص جديد
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {phase === "done" && result && (
         <div className="mx-auto mt-8 max-w-md text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
             <CheckCircle2 className="h-8 w-8" strokeWidth={1.5} />
           </div>
-          <h1 className="mt-6 text-3xl">تمت الاستعادة بنجاح</h1>
+          <h1 className="mt-6 text-3xl">
+            {result.failed.length ? "اكتمل الاسترجاع جزئياً" : "تمت الاستعادة بنجاح"}
+          </h1>
           <p className="num mt-3 text-[15px] text-muted-foreground">
-            تم استرجاع {count} ملف بحجم {totalMb.toFixed(1)} ميجا إلى {path}
+            تم استرجاع {result.recovered} ملف إلى {result.destination}
           </p>
+
+          {result.failed.length > 0 && (
+            <div className="mt-5 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-right">
+              <p className="num mb-2 text-[13px] text-warning">
+                {result.failed.length} ملف لم يتم نسخه:
+              </p>
+              <ul className="num max-h-40 space-y-1 overflow-auto text-[12px] text-muted-foreground">
+                {result.failed.map((f) => (
+                  <li key={f.name}>
+                    {f.name} — {f.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button
-              onClick={() =>
-                toast("فتح مجلد الملفات", {
-                  description: `المسار: ${path} — فتح المجلد يشتغل في نسخة سطح المكتب.`,
-                })
-              }
+              onClick={async () => {
+                const ok = await openFolder(result.destination);
+                if (!ok)
+                  toast("فتح المجلد متاح في نسخة سطح المكتب", { description: result.destination });
+              }}
               className="rounded-full px-6 py-6 text-sm hover:bg-primary-glow"
             >
               فتح مجلد الملفات
             </Button>
-            <Button
-              variant="outline"
-              onClick={onRestart}
-              className="gap-2 rounded-full px-6 py-6 text-sm"
-            >
+            <Button variant="outline" onClick={onRestart} className="gap-2 rounded-full px-6 py-6 text-sm">
               <RotateCcw className="h-4 w-4" strokeWidth={1.5} />
               فحص جديد
             </Button>

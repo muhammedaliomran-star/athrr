@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Image as ImageIcon, Pause, Play, Video, X } from "lucide-react";
+import { AlertTriangle, Image as ImageIcon, Pause, Play, RefreshCw, Video, X } from "lucide-react";
+import type { ReactNode } from "react";
 
 import {
   AlertDialog,
@@ -12,47 +12,62 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export function ScanScreen({
   driveName,
-  onDone,
+  percent,
+  images,
+  videos,
+  currentPath,
+  paused,
+  error,
+  onTogglePause,
   onCancel,
+  onRetry,
 }: {
   driveName: string;
-  onDone: (images: number, videos: number) => void;
+  percent: number;
+  images: number;
+  videos: number;
+  currentPath?: string;
+  paused: boolean;
+  error: string | null;
+  onTogglePause: () => void;
   onCancel: () => void;
+  onRetry: () => void;
 }) {
-  const [progress, setProgress] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => {
-      setProgress((p) => {
-        const next = Math.min(100, p + Math.random() * 3.5);
-        if (next >= 100) clearInterval(id);
-        return next;
-      });
-    }, 140);
-    return () => clearInterval(id);
-  }, [paused]);
-
-  const images = Math.round((progress / 100) * 142);
-  const videos = Math.round((progress / 100) * 17);
-  const remaining = Math.max(0, Math.round(((100 - progress) / 100) * 180));
-  const pct = Math.round(progress);
-
-  useEffect(() => {
-    if (progress < 100) return undefined;
-    const t = setTimeout(() => onDone(142, 17), 600);
-    return () => clearTimeout(t);
-  }, [progress, onDone]);
-
+  const pct = Math.round(percent);
+  const remaining = Math.max(0, Math.round(((100 - percent) / 100) * 180));
   const r = 70;
   const c = 2 * Math.PI * r;
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-md text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/15 text-destructive">
+          <AlertTriangle className="h-8 w-8" strokeWidth={1.5} />
+        </div>
+        <h1 className="mt-6 text-2xl">توقّف الفحص</h1>
+        <Alert className="mt-4 border-transparent bg-destructive/10 text-right text-destructive">
+          <AlertTitle>سبب المشكلة</AlertTitle>
+          <AlertDescription className="text-[13px] leading-relaxed">{error}</AlertDescription>
+        </Alert>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Button onClick={onRetry} className="gap-2 rounded-full px-6 py-6 text-sm">
+            <RefreshCw className="h-4 w-4" strokeWidth={1.5} />
+            إعادة الفحص
+          </Button>
+          <Button variant="outline" onClick={onCancel} className="rounded-full px-6 py-6 text-sm">
+            اختيار قرص آخر
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="text-center">
@@ -64,11 +79,11 @@ export function ScanScreen({
       </Badge>
       <p className="mt-4 text-[15px] text-muted-foreground">جاري فحص {driveName}</p>
       <h1 className="mt-1 text-3xl md:text-4xl">
-        {progress >= 100 ? "اكتمل الفحص" : paused ? "الفحص متوقف مؤقتاً" : "فحص عميق شغال..."}
+        {percent >= 100 ? "اكتمل الفحص" : paused ? "الفحص متوقف مؤقتاً" : "فحص عميق شغال..."}
       </h1>
 
       <div
-        className="relative mx-auto mt-10 h-[180px] w-[180px]"
+        className="relative mx-auto mt-8 h-[150px] w-[150px] sm:mt-10 sm:h-[180px] sm:w-[180px]"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
@@ -77,15 +92,7 @@ export function ScanScreen({
         aria-label="تقدم الفحص العميق"
       >
         <svg viewBox="0 0 180 180" className="h-full w-full -rotate-90" aria-hidden>
-          <circle
-            cx="90"
-            cy="90"
-            r={r}
-            fill="none"
-            strokeWidth="10"
-            className="stroke-border"
-            strokeLinecap="round"
-          />
+          <circle cx="90" cy="90" r={r} fill="none" strokeWidth="10" className="stroke-border" strokeLinecap="round" />
           <circle
             cx="90"
             cy="90"
@@ -95,7 +102,7 @@ export function ScanScreen({
             strokeLinecap="round"
             className="stroke-primary transition-[stroke-dashoffset] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
             strokeDasharray={c}
-            strokeDashoffset={c - (progress / 100) * c}
+            strokeDashoffset={c - (percent / 100) * c}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -106,30 +113,24 @@ export function ScanScreen({
         </div>
       </div>
 
-      <div className="mx-auto mt-10 grid max-w-lg gap-3 sm:grid-cols-2" aria-live="polite">
-        <Counter
-          icon={<ImageIcon className="h-5 w-5" strokeWidth={1.5} />}
-          value={images}
-          label="صورة تم العثور عليها"
-        />
-        <Counter
-          icon={<Video className="h-5 w-5" strokeWidth={1.5} />}
-          value={videos}
-          label="فيديو تم العثور عليه"
-        />
+      {currentPath && (
+        <p className="num mx-auto mt-4 max-w-md truncate text-[11px] text-muted-foreground" dir="ltr">
+          {currentPath}
+        </p>
+      )}
+
+      <div className="mx-auto mt-8 grid max-w-lg gap-3 sm:mt-10 sm:grid-cols-2" aria-live="polite">
+        <Counter icon={<ImageIcon className="h-5 w-5" strokeWidth={1.5} />} value={images} label="صورة تم العثور عليها" />
+        <Counter icon={<Video className="h-5 w-5" strokeWidth={1.5} />} value={videos} label="فيديو تم العثور عليه" />
       </div>
 
-      <div className="mt-10 flex flex-wrap justify-center gap-3">
+      <div className="mt-8 flex flex-wrap justify-center gap-3 sm:mt-10">
         <Button
           variant="outline"
-          onClick={() => setPaused((p) => !p)}
+          onClick={onTogglePause}
           className="gap-2 rounded-full bg-secondary/50 px-5 py-5"
         >
-          {paused ? (
-            <Play className="h-4 w-4" strokeWidth={1.5} />
-          ) : (
-            <Pause className="h-4 w-4" strokeWidth={1.5} />
-          )}
+          {paused ? <Play className="h-4 w-4" strokeWidth={1.5} /> : <Pause className="h-4 w-4" strokeWidth={1.5} />}
           {paused ? "استئناف" : "إيقاف مؤقت"}
         </Button>
 
@@ -166,7 +167,7 @@ export function ScanScreen({
   );
 }
 
-function Counter({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+function Counter({ icon, value, label }: { icon: ReactNode; value: number; label: string }) {
   return (
     <div className="rounded-[1.5rem] border border-border bg-secondary/40 p-1.5">
       <Card className="rounded-[calc(1.5rem-0.375rem)] border-border/60 bg-card p-5 shadow-none">
