@@ -2,11 +2,14 @@ import { demoDrives, generateFiles, type Drive, type FoundFile } from "@/lib/rec
 
 export type ScanTarget = "image" | "video" | "both";
 
+export type ScanMode = "quick" | "deep";
+
 export type ScanProgress = {
   percent: number;
   images: number;
   videos: number;
   currentPath?: string;
+  phase?: "quick" | "deep";
 };
 
 export type RecoverProgress = { percent: number; done: number; total: number };
@@ -20,7 +23,13 @@ export type RecoverResult = {
 type AtharApi = {
   version: string;
   listDrives: () => Promise<Drive[]>;
-  startScan: (opts: { path: string; target: ScanTarget }) => Promise<{ scanId: string }>;
+  startScan: (opts: {
+    path: string;
+    target: ScanTarget;
+    mode?: ScanMode;
+    device?: string;
+  }) => Promise<{ scanId: string }>;
+  clearCarved?: () => Promise<boolean>;
   cancelScan: () => Promise<void>;
   pauseScan: (paused: boolean) => Promise<void>;
   onScanProgress: (cb: (p: ScanProgress) => void) => () => void;
@@ -68,6 +77,7 @@ export function startScan(
   opts: {
     drive: Drive;
     target: ScanTarget;
+    mode?: ScanMode;
     onProgress: (p: ScanProgress) => void;
     onDone: (files: FoundFile[]) => void;
     onError: (message: string) => void;
@@ -91,7 +101,12 @@ export function startScan(
     });
 
     api
-      .startScan({ path: opts.drive.path, target: opts.target })
+      .startScan({
+        path: opts.drive.path,
+        target: opts.target,
+        mode: opts.mode ?? "quick",
+        device: opts.drive.device,
+      })
       .catch((e: unknown) => opts.onError(e instanceof Error ? e.message : "فشل بدء الفحص."));
 
     return {
@@ -140,6 +155,10 @@ export function startScan(
       paused = p;
     },
   };
+}
+
+export async function clearCarved(): Promise<void> {
+  await getBridge()?.clearCarved?.();
 }
 
 export async function chooseFolder(): Promise<string | null> {
