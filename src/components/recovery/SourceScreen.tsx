@@ -1,7 +1,7 @@
-import { AlertTriangle, ArrowLeft, HardDrive, SdCard, Usb } from "lucide-react";
+import { AlertTriangle, ArrowLeft, HardDrive, MemoryStick, Usb } from "lucide-react";
 import { drives, type FileKind } from "@/lib/recovery-data";
 
-const icons = { disk: HardDrive, usb: Usb, sd: SdCard } as const;
+const icons = { disk: HardDrive, usb: Usb, sd: MemoryStick } as const;
 
 export type Target = FileKind | "both";
 
