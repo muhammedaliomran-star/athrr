@@ -205,7 +205,7 @@ async function carve({
 
       if (best.video) {
         const len = await mp4Length(fd, absStart, absStart + 2048 * MB);
-        if (len >= 64 * 1024) {
+        if (len >= 8 * 1024) {
           await writeRange(absStart, len, "mp4", "video", false);
           cursor = best.at + Math.max(len, 8);
           if (cursor > bytesRead) {
