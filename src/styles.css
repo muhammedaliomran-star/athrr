@@ -2,6 +2,13 @@
 @source "../src";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: "Palestine";
+  src: url("/__l5e/assets-v1/daee22f3-28f4-496d-b830-15129d283098/Palestine-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /*
@@ -19,7 +26,7 @@
  */
 
 @theme inline {
-  --font-display: "Reem Kufi", "Tajawal", sans-serif;
+  --font-display: "Palestine", "Tajawal", sans-serif;
   --font-sans: "Tajawal", sans-serif;
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
@@ -167,7 +174,10 @@
 
   h1,
   h2,
-  h3 {
+  h3,
+  h4,
+  button,
+  .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
