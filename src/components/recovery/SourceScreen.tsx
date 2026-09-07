@@ -111,40 +111,7 @@ export function SourceScreen({
             >
               <Card className="rounded-[calc(1.5rem-0.375rem)] border-border/60 bg-card p-5 shadow-none">
                 <div className="mb-3 flex items-center gap-3">
-                  {error && (
-        <Alert className="mt-6 border-transparent bg-destructive/10 text-destructive">
-          <AlertTriangle className="h-4 w-4" strokeWidth={1.5} />
-          <AlertTitle>تعذّر قراءة الأقراص</AlertTitle>
-          <AlertDescription className="text-[13px] leading-relaxed">
-            {error}
-            <Button variant="outline" onClick={onRetry} className="mt-3 gap-2 rounded-full">
-              <RefreshCw className="h-4 w-4" strokeWidth={1.5} />
-              إعادة المحاولة
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {loading && (
-        <div className="mt-8 grid gap-3 sm:grid-cols-2" aria-live="polite">
-          <span className="sr-only">جارٍ قراءة الأقراص المتصلة</span>
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-[132px] animate-pulse rounded-[1.5rem] border border-border bg-secondary/40" />
-          ))}
-        </div>
-      )}
-
-      {!loading && !error && drives.length === 0 && (
-        <div className="mt-8 rounded-2xl border border-dashed border-border p-10 text-center">
-          <p className="text-[15px] text-muted-foreground">لم نعثر على أي قرص متصل بجهازك.</p>
-          <Button variant="outline" onClick={onRetry} className="mt-4 gap-2 rounded-full">
-            <RefreshCw className="h-4 w-4" strokeWidth={1.5} />
-            تحديث القائمة
-          </Button>
-        </div>
-      )}
-
-      <RadioGroupItem value={d.id} id={`drive-${d.id}`} />
+                  <RadioGroupItem value={d.id} id={`drive-${d.id}`} />
                   <Icon
                     className={`h-5 w-5 ${active ? "text-primary" : "text-muted-foreground"}`}
                     strokeWidth={1.5}
