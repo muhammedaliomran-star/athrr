@@ -12,6 +12,7 @@ import {
   type ScanMode,
   type ScanHandle,
   type RecoverResult,
+  isDesktop,
 } from "@/lib/athar-bridge";
 import type { Drive, FoundFile } from "@/lib/recovery-data";
 import {
@@ -261,6 +262,7 @@ function Index() {
       {step === 2 && (
         <PreviewScreen
           files={files}
+          desktopAvailable={isDesktop()}
           selected={selected}
           onToggle={toggleFile}
           onClear={() => setSelected(new Set())}
@@ -272,7 +274,7 @@ function Index() {
       {step === 3 && (
         <RecoverScreen
           files={selectedFiles}
-          totalMb={totalMb}
+          sourceRoot={drive?.path}
           destination={destination}
           onDestinationChange={setDestination}
           onFinished={handleFinished}

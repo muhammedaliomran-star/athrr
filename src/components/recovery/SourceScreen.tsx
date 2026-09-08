@@ -205,7 +205,8 @@ export function SourceScreen({
           <AlertTitle>الاستخراج العميق</AlertTitle>
           <AlertDescription className="text-[13px] leading-relaxed text-muted-foreground">
             بيقرأ القرص قطاع بقطاع ويطلع الصور والفيديوهات اللي اتمسحت خالص من جدول الملفات، حتى لو
-            اسمها ضاع. بياخد وقت أطول بكتير، ومحتاج تشغيل أثر بصلاحيات المدير.
+            اسمها ضاع. يدعم حاليًا JPG وPNG وGIF وBMP وMP4 وMOV وAVI وHEIC. بياخد وقت أطول بكتير،
+            ومحتاج تشغيل أثر بصلاحيات المدير.
           </AlertDescription>
         </Alert>
       )}

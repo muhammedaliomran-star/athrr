@@ -20,6 +20,14 @@ export type RecoverResult = {
   failed: { name: string; reason: string }[];
 };
 
+export type RecoverOptions = {
+  files: FoundFile[];
+  destination: string;
+  sourceRoot?: string;
+  skipCorrupt?: boolean;
+  keepFolderStructure?: boolean;
+};
+
 type AtharApi = {
   version: string;
   listDrives: () => Promise<Drive[]>;
@@ -36,7 +44,7 @@ type AtharApi = {
   onScanDone: (cb: (files: FoundFile[]) => void) => () => void;
   onScanError: (cb: (message: string) => void) => () => void;
   chooseFolder: () => Promise<string | null>;
-  recover: (opts: { files: FoundFile[]; destination: string }) => Promise<RecoverResult>;
+  recover: (opts: RecoverOptions) => Promise<RecoverResult>;
   onRecoverProgress: (cb: (p: RecoverProgress) => void) => () => void;
   openFolder: (path: string) => Promise<boolean>;
   defaultDestination: () => Promise<string>;
@@ -189,34 +197,18 @@ export async function recoverFiles(
   files: FoundFile[],
   destination: string,
   onProgress: (p: RecoverProgress) => void,
+  options: Omit<RecoverOptions, "files" | "destination"> = {},
 ): Promise<RecoverResult> {
   const api = getBridge();
   if (api) {
     const off = onRecoverProgress(onProgress);
     try {
-      return await api.recover({ files, destination });
+      return await api.recover({ files, destination, ...options });
     } finally {
       off();
     }
   }
 
-  // نسخة العرض
-  return new Promise((resolve) => {
-    let percent = 0;
-    const id = setInterval(() => {
-      percent = Math.min(100, percent + Math.random() * 6);
-      onProgress({
-        percent,
-        done: Math.round((percent / 100) * files.length),
-        total: files.length,
-      });
-      if (percent >= 100) {
-        clearInterval(id);
-        setTimeout(
-          () => resolve({ recovered: files.length, destination, failed: [] }),
-          300,
-        );
-      }
-    }, 130);
-  });
+  void onProgress;
+  throw new Error("الاسترجاع الفعلي متاح في نسخة سطح المكتب فقط.");
 }

@@ -6,6 +6,17 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -26,19 +37,20 @@ import {
   type RecoverResult,
 } from "@/lib/athar-bridge";
 import type { FoundFile } from "@/lib/recovery-data";
+import { loadSettings } from "@/lib/persist";
 
 type Phase = "confirm" | "running" | "done" | "failed";
 
 export function RecoverScreen({
   files,
-  totalMb,
+  sourceRoot,
   destination,
   onDestinationChange,
   onFinished,
   onRestart,
 }: {
   files: FoundFile[];
-  totalMb: number;
+  sourceRoot?: string;
   destination: string;
   onDestinationChange: (path: string) => void;
   onFinished: (result: RecoverResult) => void;
@@ -51,6 +63,8 @@ export function RecoverScreen({
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<RecoverResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const settings = loadSettings();
+  const recoverableFiles = settings.skipCorrupt ? files.filter((file) => file.health !== "تالفة") : files;
 
   useEffect(() => {
     if (destination) return;
@@ -69,7 +83,11 @@ export function RecoverScreen({
     setPhase("running");
     setProgress(0);
     try {
-      const res = await recoverFiles(files, destination, (p) => setProgress(p.percent));
+      const res = await recoverFiles(recoverableFiles, destination, (p) => setProgress(p.percent), {
+        ...(sourceRoot ? { sourceRoot } : {}),
+        skipCorrupt: settings.skipCorrupt,
+        keepFolderStructure: settings.keepFolderStructure,
+      });
       setResult(res);
       onFinished(res);
       setPhase("done");
@@ -133,7 +151,7 @@ export function RecoverScreen({
           </Alert>
 
           <p className="num mt-4 text-[13px] text-muted-foreground" aria-live="polite">
-            سيتم استرجاع {count} ملف بحجم {totalMb.toFixed(1)} ميجا.
+            سيتم استرجاع {recoverableFiles.length} ملف بحجم {recoverableFiles.reduce((sum, file) => sum + file.sizeMb, 0).toFixed(1)} ميجا.
           </p>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -191,13 +209,40 @@ export function RecoverScreen({
               </Dialog>
             )}
 
-            <Button
-              onClick={start}
-              disabled={!destination || count === 0}
-              className="flex-1 rounded-full py-6 text-sm hover:bg-primary-glow"
-            >
-              استعادة الآن
-            </Button>
+            {settings.confirmBeforeRecover ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      disabled={!destination || recoverableFiles.length === 0}
+                      className="flex-1 rounded-full py-6 text-sm hover:bg-primary-glow"
+                    >
+                      استعادة الآن
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>تأكيد الاسترجاع</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        سيتم نسخ {recoverableFiles.length} ملف إلى مجلد الحفظ. تأكد أن المجلد على قرص مختلف.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                      <AlertDialogAction onClick={start}>ابدأ الاسترجاع</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Button
+                  type="button"
+                  disabled={!destination || recoverableFiles.length === 0}
+                  onClick={start}
+                  className="flex-1 rounded-full py-6 text-sm hover:bg-primary-glow"
+                >
+                  استعادة الآن
+                </Button>
+              )}
           </div>
         </div>
       )}

@@ -43,6 +43,7 @@ function healthBadgeClass(health: FoundFile["health"]) {
 
 export function PreviewScreen({
   files,
+  desktopAvailable,
   selected,
   onToggle,
   onClear,
@@ -51,6 +52,7 @@ export function PreviewScreen({
   onNext,
 }: {
   files: FoundFile[];
+  desktopAvailable: boolean;
   selected: Set<string>;
   onToggle: (id: string) => void;
   onClear: () => void;
@@ -258,12 +260,12 @@ export function PreviewScreen({
 
       <div className="mt-10">
         <Button
-          disabled={selected.size === 0}
+          disabled={selected.size === 0 || !desktopAvailable}
           onClick={onNext}
           size="lg"
           className="group gap-3 rounded-full py-6 pr-6 pl-2.5 hover:bg-primary-glow"
         >
-          <span className="text-base">استعادة المحدد</span>
+          <span className="text-base">{desktopAvailable ? "استعادة المحدد" : "الاسترجاع متاح في نسخة سطح المكتب"}</span>
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/10 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-x-1 group-hover:scale-105">
             <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
           </span>

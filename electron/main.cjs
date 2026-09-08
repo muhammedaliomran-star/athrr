@@ -86,21 +86,25 @@ async function listDrives() {
   const systemRoot = path.parse(process.execPath).root;
 
   if (process.platform === "win32") {
-    const out = await run("wmic", ["logicaldisk", "get", "DeviceID,DriveType,FreeSpace,Size,VolumeName", "/format:csv"]);
-    const rows = out.split(/\r?\n/).filter((l) => l.includes(","));
-    const header = rows.shift() || "";
-    const cols = header.split(",").map((c) => c.trim());
-    const idx = (n) => cols.indexOf(n);
+    const command =
+      "Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID,DriveType,FreeSpace,Size,VolumeName | ConvertTo-Json -Compress";
+    const out = await run("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", command]);
+    let rows = [];
+    try {
+      const parsed = out ? JSON.parse(out) : [];
+      rows = Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      return [];
+    }
     const drives = [];
     for (const row of rows) {
-      const c = row.split(",");
-      const id = (c[idx("DeviceID")] || "").trim();
+      const id = String(row.DeviceID || "").trim();
       if (!id) continue;
-      const size = Number(c[idx("Size")] || 0);
-      const free = Number(c[idx("FreeSpace")] || 0);
+      const size = Number(row.Size || 0);
+      const free = Number(row.FreeSpace || 0);
       if (!size) continue;
-      const type = Number(c[idx("DriveType")] || 3);
-      const label = (c[idx("VolumeName")] || "").trim();
+      const type = Number(row.DriveType || 3);
+      const label = String(row.VolumeName || "").trim();
       drives.push({
         id,
         name: label ? `${label} (${id})` : `القرص ${id}`,
@@ -252,6 +256,7 @@ ipcMain.handle("athar:startScan", async (_e, { path: root, target, mode, device 
       if (scan.cancelled) return;
 
       if (deep && device) {
+        await fsp.rm(carveDir(), { recursive: true, force: true });
         const baseImages = files.filter((f) => f.kind === "image").length;
         const baseVideos = files.filter((f) => f.kind === "video").length;
         try {
@@ -300,6 +305,7 @@ ipcMain.handle("athar:startScan", async (_e, { path: root, target, mode, device 
       );
     } finally {
       scan.running = false;
+      if (scan.cancelled) void fsp.rm(carveDir(), { recursive: true, force: true });
     }
   })();
   return { scanId: String(Date.now()) };
@@ -367,9 +373,24 @@ async function uniqueTarget(dir, name) {
   return candidate;
 }
 
-ipcMain.handle("athar:recover", async (_e, { files, destination }) => {
+function isInside(parent, target) {
+  const relative = path.relative(path.resolve(parent), path.resolve(target));
+  return relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative));
+}
+
+function sameVolume(a, b) {
+  if (process.platform !== "win32") return false;
+  return path.parse(path.resolve(a)).root.toLowerCase() === path.parse(path.resolve(b)).root.toLowerCase();
+}
+
+ipcMain.handle(
+  "athar:recover",
+  async (_e, { files, destination, sourceRoot, keepFolderStructure }) => {
   const failed = [];
   let recovered = 0;
+  if (sourceRoot && (sameVolume(sourceRoot, destination) || isInside(sourceRoot, destination))) {
+    throw new Error("لا يمكن حفظ الملفات على نفس القرص المفحوص. اختر قرصًا مختلفًا لتقليل خطر فقدان البيانات.");
+  }
   try {
     await fsp.mkdir(destination, { recursive: true });
   } catch (err) {
@@ -380,7 +401,15 @@ ipcMain.handle("athar:recover", async (_e, { files, destination }) => {
     const f = files[i];
     try {
       if (!f.path) throw Object.assign(new Error("no path"), { code: "ENOENT" });
-      const target = await uniqueTarget(destination, f.name);
+      const allowed = (sourceRoot && isInside(sourceRoot, f.path)) || isInside(carveDir(), f.path);
+      if (!allowed) throw Object.assign(new Error("invalid source path"), { code: "EACCES" });
+      let targetDir = destination;
+      if (keepFolderStructure && sourceRoot && isInside(sourceRoot, f.path)) {
+        const relativeDir = path.dirname(path.relative(sourceRoot, f.path));
+        if (relativeDir && relativeDir !== ".") targetDir = path.join(destination, relativeDir);
+        await fsp.mkdir(targetDir, { recursive: true });
+      }
+      const target = await uniqueTarget(targetDir, f.name);
       await fsp.copyFile(f.path, target);
       recovered += 1;
     } catch (err) {
@@ -394,7 +423,9 @@ ipcMain.handle("athar:recover", async (_e, { files, destination }) => {
       });
     }
   }
+  await fsp.rm(carveDir(), { recursive: true, force: true });
   return { recovered, destination, failed };
-});
+  },
+);
 
 ipcMain.handle("athar:version", () => `${app.getVersion()} · ${os.platform()}`);

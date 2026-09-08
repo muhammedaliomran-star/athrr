@@ -32,11 +32,31 @@ const SIGNATURES = [
     tail: Buffer.from([0x00, 0x3b]),
     max: 24 * MB,
   },
+  {
+    ext: "bmp",
+    kind: "image",
+    head: Buffer.from("BM", "ascii"),
+    fixed: true,
+    sizeOffset: 2,
+    max: 120 * MB,
+  },
+  {
+    ext: "avi",
+    kind: "video",
+    head: Buffer.from("RIFF", "ascii"),
+    fixed: true,
+    sizeOffset: 4,
+    max: 4 * 1024 * MB,
+    match: (buf, at) => buf.toString("ascii", at + 8, at + 12) === "AVI ",
+  },
 ];
 
 // MP4 / MOV / 3GP: البصمة "ftyp" على الإزاحة 4 من بداية الملف
 const FTYP = Buffer.from("ftyp", "ascii");
-const MOOV_BRANDS = ["isom", "iso2", "mp41", "mp42", "avc1", "qt  ", "3gp", "M4V", "mmp4", "MSNV", "dash"];
+const MOOV_BRANDS = [
+  "isom", "iso2", "mp41", "mp42", "avc1", "qt  ", "3gp", "M4V", "mmp4", "MSNV", "dash",
+  "heic", "heix", "hevc", "mif1", "msf1",
+];
 
 /** يقرأ 8 بايت على إزاحة مطلقة */
 async function readAt(fd, offset, length) {
@@ -184,7 +204,7 @@ async function carve({
       for (const sig of SIGNATURES) {
         if (!wantsKind(sig.kind)) continue;
         const at = indexOfFrom(view, sig.head, cursor);
-        if (at !== -1 && (!best || at < best.at)) best = { at, sig };
+        if (at !== -1 && (!sig.match || sig.match(view, at)) && (!best || at < best.at)) best = { at, sig };
       }
       let ftypAt = -1;
       if (wantsKind("video")) {
@@ -220,9 +240,10 @@ async function carve({
 
       const sig = best.sig;
       if (sig.fixed) {
-        // BMP: الطول مكتوب في الرأس
-        const header = await readAt(fd, absStart, 6);
-        const size = header ? header.readUInt32LE(2) : 0;
+        // BMP/AVI: الطول مكتوب في الرأس، ويشمل رأس RIFF نفسه في AVI.
+        const header = await readAt(fd, absStart, sig.sizeOffset + 4);
+        const declared = header ? header.readUInt32LE(sig.sizeOffset) : 0;
+        const size = sig.ext === "avi" ? declared + 8 : declared;
         if (size > 1024 && size < sig.max) {
           await writeRange(absStart, size, sig.ext, sig.kind, false);
           cursor = best.at + Math.min(size, bytesRead - best.at);
