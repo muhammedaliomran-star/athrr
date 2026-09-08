@@ -60,7 +60,7 @@ function HistoryPage() {
         <div className="mt-10 rounded-2xl border border-dashed border-border p-10 text-center">
           <p className="text-[15px] text-muted-foreground">لسه مفيش أي عملية استرجاع.</p>
           <Button asChild className="mt-5 rounded-full px-6">
-            <Link to="/">ابدأ أول فحص</Link>
+            <Link to="/app">ابدأ أول فحص</Link>
           </Button>
         </div>
       ) : (

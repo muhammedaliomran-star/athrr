@@ -67,7 +67,7 @@ function Privacy() {
       </div>
 
       <Button asChild variant="outline" className="mt-9 rounded-full px-6 py-6 text-sm">
-        <Link to="/">العودة للتطبيق</Link>
+        <Link to="/app">العودة للتطبيق</Link>
       </Button>
     </PageShell>
   );

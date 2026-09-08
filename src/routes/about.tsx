@@ -55,7 +55,7 @@ function About() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="rounded-full px-6 py-6 text-sm">
-          <Link to="/">ابدأ فحص جديد</Link>
+          <Link to="/app">ابدأ فحص جديد</Link>
         </Button>
         <Button asChild variant="outline" className="rounded-full px-6 py-6 text-sm">
           <Link to="/privacy">سياسة الخصوصية</Link>
