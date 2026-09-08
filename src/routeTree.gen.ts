@@ -10,8 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -21,14 +21,14 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -49,16 +49,16 @@ const SettingsRoute = SettingsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/about': typeof AboutRoute
+  '/app': typeof AppRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/about': typeof AboutRoute
+  '/app': typeof AppRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -66,24 +66,25 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/about': typeof AboutRoute
+  '/app': typeof AppRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/about' | '/history' | '/privacy' | '/settings'
+  fullPaths: '/' | '/about' | '/app' | '/history' | '/privacy' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/about' | '/history' | '/privacy' | '/settings'
-  id: '__root__' | '/' | '/app' | '/about' | '/history' | '/privacy' | '/settings'
+  to: '/' | '/about' | '/app' | '/history' | '/privacy' | '/settings'
+  id:
+    '__root__' | '/' | '/about' | '/app' | '/history' | '/privacy' | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRoute
   AboutRoute: typeof AboutRoute
+  AppRoute: typeof AppRoute
   HistoryRoute: typeof HistoryRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
@@ -138,8 +139,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRoute,
   AboutRoute: AboutRoute,
+  AppRoute: AppRoute,
   HistoryRoute: HistoryRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,

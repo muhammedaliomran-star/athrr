@@ -36,8 +36,12 @@ let serverProc = null;
 
 /** يشغّل خادم أثر المحلي المرفق مع التطبيق ويعيد عنوانه */
 function startLocalServer() {
-  const entry = path.join(__dirname, "..", "dist", "server", "index.mjs");
-  if (!fs.existsSync(entry)) return Promise.resolve(process.env.ATHAR_URL || "http://localhost:8080");
+  const entries = [
+    path.join(__dirname, "..", "dist", "server", "index.mjs"),
+    path.join(__dirname, "..", ".output", "server", "index.mjs"),
+  ];
+  const entry = entries.find((candidate) => fs.existsSync(candidate));
+  if (!entry) return Promise.resolve(process.env.ATHAR_URL || "http://localhost:8080");
   const port = 41730 + Math.floor(Math.random() * 200);
   serverProc = spawn(process.execPath, [entry], {
     env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", PORT: String(port), HOST: "127.0.0.1" },
