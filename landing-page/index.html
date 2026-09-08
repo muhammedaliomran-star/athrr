@@ -5,47 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>أثر — استعادة الصور والفيديوهات المحذوفة</title>
     <meta name="description" content="أثر تطبيق عربي لاستعادة الصور والفيديوهات المحذوفة من الأقراص والفلاشات مع معاينة قبل الاسترجاع.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#0a0f16">
+    <meta property="og:title" content="أثر — كل أثر يستحق الرجوع">
+    <meta property="og:description" content="استعد ملفاتك المفقودة محليًا وبخصوصية كاملة.">
+    <meta property="og:image" content="/favicon.svg">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="https://athrr.lovable.app/">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header class="site-header">
+        <a class="site-brand" href="/" aria-label="أثر — الصفحة الرئيسية">
+            <span class="site-brand-mark" aria-hidden="true">أ</span>
+            <span>
+                <strong>أثر</strong>
+                <small>كل أثر يستحق الرجوع</small>
+            </span>
+        </a>
+        <nav class="site-nav" aria-label="التنقل الرئيسي">
+            <a href="#features">المميزات</a>
+            <a href="#how-it-works">كيف يعمل</a>
+            <a href="#privacy">الخصوصية</a>
+        </nav>
+        <a class="site-header-cta" href="/app">ابدأ الفحص</a>
+    </header>
     <!-- Section 1: Hero -->
     <section class="hero">
         <div class="hero-content">
-            <h1 class="hero-title">كل أثر يستحق الرجوع</h1>
+            <h1 class="hero-title"><span>كل أثر</span><br><span>يستحق الرجوع</span></h1>
             <p class="hero-subtitle">استعادة صورك وفيديوهاتك المحذوفة من الأقراص والفلاشات. كل المعالجة تتم على جهازك فقط.</p>
             <div class="hero-cta-group">
                 <a href="/app" class="cta-primary">
                     <svg class="cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                     </svg>
-                    حمّل النسخة المجانية
+                    ابدأ الفحص مجانًا
                 </a>
                 <a href="#features" class="cta-secondary">اكتشف المزيد</a>
             </div>
         </div>
         <div class="hero-visual">
-            <div class="visual-composition">
-                <div class="visual-element element-1">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <polyline points="21 15 16 10 5 21"/>
-                    </svg>
+            <div class="product-preview" aria-label="معاينة لواجهة أثر أثناء فحص القرص">
+                <div class="product-window-bar">
+                    <span class="window-dot"></span><span class="window-dot"></span><span class="window-dot"></span>
+                    <span class="product-window-title">أثر / فحص القرص</span>
                 </div>
-                <div class="visual-element element-2">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                        <polygon points="23 7 16 12 23 17 23 7"/>
-                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                    </svg>
-                </div>
-                <div class="visual-element element-3">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
+                <div class="product-window-body">
+                    <div class="product-sidebar">
+                        <span class="sidebar-logo">أثر</span>
+                        <span class="sidebar-line active"></span><span class="sidebar-line"></span><span class="sidebar-line"></span>
+                    </div>
+                    <div class="product-main">
+                        <div class="product-main-heading"><span>جاري فحص فلاشة USB</span><strong>68%</strong></div>
+                        <div class="product-progress"><span></span></div>
+                        <div class="product-stats"><span><b>142</b> صورة</span><span><b>17</b> فيديو</span></div>
+                        <div class="product-files">
+                            <div><span class="file-thumb amber"></span><span>IMG_2201.jpg</span><em>سليمة</em></div>
+                            <div><span class="file-thumb blue"></span><span>VID_0045.mp4</span><em>جزئية</em></div>
+                            <div><span class="file-thumb green"></span><span>DCIM_0012.png</span><em>سليمة</em></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -56,7 +76,7 @@
         <div class="problem-content">
             <div class="problem-text">
                 <h2>هل فقدت ملفاتك المهمة؟</h2>
-                <p class="problem-description">صورة عائلية، فيديو من رحلة، أو لقطة من مناسبة مهمة — كلنا مرتين بالخطأ ومحذوف ملفات ثمينة.</p>
+                <p class="problem-description">صورة عائلية، فيديو من رحلة، أو لقطة من مناسبة مهمة — كلنا بنغلط ونحذف ملفات ثمينة بالخطأ.</p>
             </div>
             <div class="problem-visual">
                 <div class="visual-comparison">
@@ -123,7 +143,7 @@
         <div class="features-layout">
             <div class="features-main">
                 <h2>فحص عميق</h2>
-                <p>يقرأ القرص قطاع بقطاع ويستخرج الصور والفيديوهات حتى لو اتمسحت من جدول الملفات.</p>
+            <p>يقرأ القرص قطاعًا بقطاع لاكتشاف الملفات القابلة للاسترجاع، حتى لو اتمسحت من جدول الملفات، ويدعم صيغًا شائعة مثل JPG وPNG وGIF وBMP وMP4 وMOV وAVI وHEIC.</p>
             </div>
             <div class="features-secondary">
                 <div class="feature-item">
@@ -188,42 +208,42 @@
                 <p>مع أثر، ملفاتك تبقى على جهازك وحدك. لا نجمع أي بيانات شخصية ولا نرفع أي ملفات.</p>
                 <div class="privacy-features">
                     <div class="privacy-feature">
-                        <span>لا حاجة لاتصال بالإنترنت</span>
+                        <span>ملفاتك لا تُرفع إلى أي خادم</span>
                     </div>
                     <div class="privacy-feature">
                         <span>لا تسجيل أو حسابات مطلوبة</span>
                     </div>
                     <div class="privacy-feature">
-                        <span>مفتوح المصدر</span>
+                        <span>إعدادات واضحة وتحكم كامل</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Section 6: Testimonials -->
+    <!-- Section 6: Product promise -->
     <section class="testimonials-section">
         <div class="testimonials-layout">
             <div class="testimonial-main">
                 <blockquote class="testimonial-quote">
-                    "استرجعت صور عائلية ظننتها ضاعت للأبد. التطبيق سهل الاستخدام والنتائج ممتازة."
+                    "شوف الملفات أولًا، اختار اللي يهمك، واحفظها في المكان المناسب — بدون رفع صورك لأي خادم."
                 </blockquote>
                 <div class="testimonial-author">
                     <div class="author-avatar">أ</div>
                     <div class="author-info">
-                        <strong>أحمد من الرياض</strong>
-                        <span>مستخدم منذ 2024</span>
+                        <strong>وعد أثر</strong>
+                        <span>وضوح قبل كل خطوة</span>
                     </div>
                 </div>
             </div>
             <div class="testimonials-secondary">
                 <div class="testimonial-mini">
-                    <p>"لفلاشتي فيها صور من رحلة السنة الماضية ومحذوفة بالخطأ. أثر استرجعها كلها!"</p>
-                    <span class="mini-author">سارة من القاهرة</span>
+                    <p>معاينة الملفات قبل النسخ تساعدك تختار بعناية.</p>
+                    <span class="mini-author">معاينة قبل الاسترجاع</span>
                 </div>
                 <div class="testimonial-mini">
-                    <p>"الاستخراج العميق شيء مذهل، طلع فيديوهات قديمة كنت ناسيها تماماً."</p>
-                    <span class="mini-author">محمد من دبي</span>
+                    <p>تنبيه واضح قبل الحفظ على نفس القرص المفحوص.</p>
+                    <span class="mini-author">حماية أفضل للبيانات</span>
                 </div>
             </div>
         </div>
@@ -233,13 +253,13 @@
     <section id="cta" class="cta-section">
         <div class="cta-content">
             <h2>استعادة ملفاتك</h2>
-            <p>حمّل أثر الآن وابدأ في استعادة ملفاتك المفقودة.</p>
+            <p>ابدأ بفحص تجريبي، واستخدم نسخة سطح المكتب للاسترجاع الفعلي.</p>
             <div class="cta-buttons">
                 <a href="/app" class="cta-primary">
                     <svg class="cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                     </svg>
-                    تحميل النسخة المجانية
+                    ابدأ الفحص مجانًا
                 </a>
             </div>
         </div>
